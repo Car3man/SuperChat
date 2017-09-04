@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Common;
+using HGL;
 
 public class ListRoomsPanel : MonoBehaviour {
 	[SerializeField] private GameObject content;
@@ -20,5 +21,9 @@ public class ListRoomsPanel : MonoBehaviour {
 		for (int i = 0; i < content.transform.childCount; i++) {
 			DestroyObject (content.transform.GetChild (0).gameObject);
 		}
+	}
+
+	public void Close () {
+		HGL_WindowManager.I.CloseWindow (null, null, "ListRoomsPanel", false);
 	}
 }

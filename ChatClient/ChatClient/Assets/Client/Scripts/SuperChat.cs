@@ -23,7 +23,7 @@ public class SuperChat : LocalSingletonBehaviour<SuperChat> {
 
 	private Client client;
 	private NetworkStream stream;
-	private Thread clientThread;
+	private UnityThreading.ActionThread clientThread;
 
 	private bool successLogin;
 
@@ -63,7 +63,7 @@ public class SuperChat : LocalSingletonBehaviour<SuperChat> {
 
 		client = new Client (new TcpClient ());
 		client.Nickname = nickname;
-		client.CurrentClient.Connect ("192.168.0.54", 6969);
+		client.CurrentClient.Connect ("192.168.0.41", 6969);
 		stream = client.CurrentClient.GetStream ();
 
 		List<byte> data = new List<byte> ();
@@ -73,8 +73,7 @@ public class SuperChat : LocalSingletonBehaviour<SuperChat> {
 
 		stream.Write (data.ToArray (), 0, data.Count);
 
-		clientThread = new Thread (ClientThread);
-		clientThread.Start ();
+		clientThread = UnityThreadHelper.CreateThread (ClientThread);
 	}
 
 	private void Update () {
@@ -101,10 +100,12 @@ public class SuperChat : LocalSingletonBehaviour<SuperChat> {
 	}
 
 	private void ClientThread () {
+		Debug.Log ("Client thread started");
+
 		byte[] buffer = new byte[4096];
 		byte[] trimBuffer;
 
-		while (true) {
+		while (!UnityThreading.ActionThread.CurrentThread.ShouldStop) {
 			int bytesCount = stream.Read (buffer, 0, buffer.Length);
 
 			if (bytesCount > 0) {
@@ -165,10 +166,12 @@ public class SuperChat : LocalSingletonBehaviour<SuperChat> {
 						rooms = (br.Deserialize (ms) as List<Room>);
 					}
 
-					ListRoomsPanel listRoomsPanel = HGL_WindowManager.I.GetWindow ("ListRoomsPanel").GetComponent<ListRoomsPanel> ();
-					listRoomsPanel.Init (rooms);
+					UnityThreadHelper.Dispatcher.Dispatch (() => {
+						ListRoomsPanel listRoomsPanel = HGL_WindowManager.I.GetWindow ("ListRoomsPanel").GetComponent<ListRoomsPanel> ();
+						listRoomsPanel.Init (rooms);
 
-					HGL_WindowManager.I.OpenWindow (null, null, "ListRoomsPanel", false, true);
+						HGL_WindowManager.I.OpenWindow (null, null, "ListRoomsPanel", false, true);
+					});
 
 				} else {
 					Debug.Log (((ResponseCode)data [1]).ToString ());
@@ -186,7 +189,7 @@ public class SuperChat : LocalSingletonBehaviour<SuperChat> {
 		if (client != null)
 			client.CurrentClient.Close ();
 		if (clientThread != null)
-			clientThread.Abort ();
+			clientThread.Exit ();
 	}
 
 	#region Public methods

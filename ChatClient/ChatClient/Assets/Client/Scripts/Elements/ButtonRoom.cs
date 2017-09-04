@@ -11,8 +11,10 @@ public class ButtonRoom : MonoBehaviour {
 	public event Action<string> OnClick = delegate { };
 
 	public void Init (string nameRoom) {
+		NameRoom = nameRoom;
+
 		GetComponent<Button> ().onClick.AddListener (OnClickEvent);
-		transform.GetChild (0).GetComponent<TextMeshProUGUI> ().text = NameRoom;
+		transform.GetChild (0).GetComponent<TextMeshProUGUI> ().text = nameRoom;
 	}
 
 	public void OnClickEvent () {

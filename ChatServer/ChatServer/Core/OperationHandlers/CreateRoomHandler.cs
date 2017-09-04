@@ -23,6 +23,8 @@ namespace ChatServer.OperationHandlers {
 				responseData.Add((byte)ResponseCode.Ok);
 
 				client.CurrentClient.GetStream().Write(responseData.ToArray() , 0 , responseData.Count);
+
+				EnterInRoomHandler.AddClientInRoom(client , server.GetRoomByName(nameNewRoom).ID , server);
 			} catch (Exception e) {
 				responseData.Add((byte)OperationCodes.CreateRoom);
 				responseData.Add((byte)ResponseCode.Error);
