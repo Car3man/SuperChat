@@ -8,6 +8,7 @@ using System.Text;
 using System.Net.NetworkInformation;
 using System.Linq;
 using Common;
+using ChatServer.OperationHandlers;
 
 namespace ChatServer {
 	public class Server {
@@ -15,8 +16,9 @@ namespace ChatServer {
 
 		private Thread serverThread;
 		private List<Thread> clientThreads = new List<Thread>();
-		private List<Client> clients = new List<Client>();
-		private List<Room> rooms = new List<Room>();
+
+		public List<Client> Clients = new List<Client>();
+		public List<Room> Rooms = new List<Room>();
 
 		public Server (int port) {
 			this.port = port;
@@ -35,11 +37,14 @@ namespace ChatServer {
 		}
 
 		private void ServerWorker () {
-			Console.WriteLine("Server started");
-
 			TcpListener server = null;
 
-			IPAddress localAddr = IPAddress.Parse("127.0.0.1");
+			string hostName = Dns.GetHostName();
+			string ip = Dns.GetHostEntry(hostName).AddressList[0].ToString();
+
+			Console.WriteLine("Server started, IP: " + ip);
+
+			IPAddress localAddr = IPAddress.Parse(ip);
 			server = new TcpListener(localAddr , port);
 			server.Start();
 
@@ -48,9 +53,9 @@ namespace ChatServer {
 
 				Console.WriteLine("Client connected");
 
-				clients.Add(new Client(client));
+				Clients.Add(new Client(client));
 
-				clientThreads.Add(new Thread(() => ClientThread(clients[clients.Count - 1])));
+				clientThreads.Add(new Thread(() => ClientThread(Clients[Clients.Count - 1])));
 				clientThreads[clientThreads.Count - 1].Start();
 
 				Thread.Sleep(100);
@@ -59,6 +64,7 @@ namespace ChatServer {
 
 		private void ClientThread (Client client) {
 			byte[] buffer = new byte[4096];
+			byte[] trimBuffer;
 
 			NetworkStream stream = client.CurrentClient.GetStream();
 
@@ -69,7 +75,9 @@ namespace ChatServer {
 					bytesCount = stream.Read(buffer , 0 , buffer.Length);
 
 					if (bytesCount > 0) {
-						HandleOperation(client , buffer);
+						trimBuffer = new byte[bytesCount];
+						Array.Copy(buffer , trimBuffer , bytesCount);
+						HandleOperation(client , trimBuffer);
 						buffer = new byte[4096];
 					}
 
@@ -77,7 +85,9 @@ namespace ChatServer {
 				}
 			}
 
-			Console.WriteLine("Client was disconnected");
+			RemoveClientFromRoom(client , client.CurrentRoomID);
+			RemoveUserRooms(client);
+			Console.WriteLine(string.Format("Client with nickname {0} was disconnected" , client.Nickname));
 		}
 
 		private void HandleOperation (Client client , byte[] data) {
@@ -85,37 +95,25 @@ namespace ChatServer {
 
 			switch (code) {
 				case OperationCodes.Login:
-					string nickname = Encoding.UTF8.GetString(data , 1 , data.Length - 1);
-					client.Nickname = nickname;
-
-					List<byte> loginResponseData = new List<byte>();
-
-					loginResponseData.Add((byte)OperationCodes.Login);
-					loginResponseData.Add((byte)ResponseCode.Ok);
-
-					client.CurrentClient.GetStream().Write(loginResponseData.ToArray() , 0 , loginResponseData.Count);
-
-					Console.WriteLine(string.Format("Client login with Nickname {0}" , nickname));
+					LoginHandler.DoHandle(client , data , this);
 					break;
 				case OperationCodes.Ping:
-					Console.WriteLine(string.Format("Client was ping with remote end point - {0}" , client.CurrentClient.Client.RemoteEndPoint.ToString()));
+					PingHandler.DoHandle(client , data , this);
 					break;
 				case OperationCodes.SendMessage:
-					Console.WriteLine("Message from client: " + Encoding.UTF8.GetString(data , 5 , data.Length - 1));
-
-					int roomIDSendMessage = BitConverter.ToInt32(data , 1);
-
-					SendAll(data , roomIDSendMessage);
+					SendMessageHandler.DoHandle(client , data , this);
 					break;
 				case OperationCodes.EnterInRoom:
-					string roomNameEnter = Encoding.UTF8.GetString(data , 1 , data.Length - 1);
-
-					AddClientInRoom(client , GetRoomByName(roomNameEnter).ID);
+					EnterInRoomHandler.DoHandle(client , data , this);
 					break;
 				case OperationCodes.CreateRoom:
-					string nameNewRoom = Encoding.UTF8.GetString(data , 1 , data.Length - 1);
-
-					CreateRoom(nameNewRoom);
+					CreateRoomHandler.DoHandle(client , data , this);
+					break;
+				case OperationCodes.GetListRooms:
+					GetListRooms.DoHandle(client , data , this);
+					break;
+				default:
+					Console.WriteLine("Operation unknow '{0}'" , code);
 					break;
 			}
 		}
@@ -137,52 +135,46 @@ namespace ChatServer {
 			}
 		}
 
-		private void AddClientInRoom (Client client , int roomID) {
-			Room room = GetRoomByID(roomID);
+		#region Private methods
 
-			if (room != null) {
-				if (!room.Clients.Contains(client)) {
-					room.Clients.Add(client);
-					Console.WriteLine(string.Format("Client was enter in room with ID {0}" , roomID));
-
-					List<byte> data = new List<byte>();
-
-					data.Add((byte)OperationCodes.EnterInRoom);
-					data.AddRange(BitConverter.GetBytes(roomID));
-
-					client.CurrentClient.GetStream().Write(data.ToArray() , 0 , data.Count);
-				} else {
-					Console.WriteLine(string.Format("Client already enter in room with ID {0}" , roomID));
-				}
-			} else {
-				Console.WriteLine(string.Format("Room with ID {0} not exist" , roomID));
-			}
+		private void RemoveUserRooms (Client client) {
+			Rooms.RemoveAll(x => x.Owner == client);
 		}
 
-		private void RemoveClientFromRoom (Client client , int roomID) {
+		#endregion
+
+		#region Public methods
+
+		public void RemoveClientFromRoom (Client client , int roomID) {
 			Room room = GetRoomByID(roomID);
 			if (room != null && room.Clients.Contains(client)) {
 				room.Clients.Remove(client);
+
+				if (room.Clients.Count == 0) {
+					RemoveRoom(room.ID);
+				}
 			}
 		}
 
-		private void CreateRoom (string name) {
-			if (rooms.Where(x => x.Name.Equals(name)).Count() > 0) return;
-
-			Room room = new Room(name , rooms.Count);
-			rooms.Add(room);
-
-			Console.WriteLine(string.Format("Room created with name {0} and ID {1}" , name , rooms.Count - 1));
-		}
-
-		private void RemoveRoom (int id) {
+		public void RemoveRoom (int id) {
 			Room room = GetRoomByID(id);
 			if (room != null) {
-				rooms.Remove(room);
+				Rooms.Remove(room);
 			}
 		}
 
-		private void SendAll (byte[] data , int roomID) {
+		public void SendDataAllClients (byte[] data) {
+			NetworkStream stream = null;
+
+			foreach (Client c in Clients) {
+				if (c.CurrentClient.Connected) {
+					stream = c.CurrentClient.GetStream();
+					stream.Write(data , 0 , data.Length);
+				}
+			}
+		}
+
+		public void SendDataClientsInRoom (byte[] data , int roomID) {
 			NetworkStream stream = null;
 
 			Room room = GetRoomByID(roomID);
@@ -192,6 +184,8 @@ namespace ChatServer {
 				return;
 			}
 
+			Console.WriteLine(room.Clients.Count);
+
 			foreach (Client c in room.Clients) {
 				if (c.CurrentClient.Connected) {
 					stream = c.CurrentClient.GetStream();
@@ -200,20 +194,24 @@ namespace ChatServer {
 			}
 		}
 
-		private Room GetRoomByID (int id) {
-			Room[] rs = rooms.Where(x => x.ID.Equals(id)).ToArray();
-			if (rs != null && rs.Length > 0) {
-				return rs[0];
+		public Room GetRoomByID (int id) {
+			foreach (Room r in Rooms) {
+				if (r.ID.Equals(id)) {
+					return r;
+				}
 			}
 			return null;
 		}
 
-		private Room GetRoomByName (string name) {
-			Room[] rs = rooms.Where(x => x.Name.Equals(name)).ToArray();
-			if (rs != null && rs.Length > 0) {
-				return rs[0];
+		public Room GetRoomByName (string name) {
+			foreach (Room r in Rooms) {
+				if (r.Name.Equals(name)) {
+					return r;
+				}
 			}
 			return null;
 		}
 	}
+
+	#endregion
 }

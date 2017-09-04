@@ -6,5 +6,5 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Client/Scenes/Client.unity
-    guid: 73683988cd19649918307c0e58bd66e5
+    path: Assets/Client/Scenes/SuperChat.unity
+    guid: 525b1fdb819c945aa85d41295950de86

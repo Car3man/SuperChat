@@ -6,6 +6,7 @@
 		EnterInRoom,
 		ExitFromRoom,
 		CreateRoom,
-		RemoveRoom
+		RemoveRoom,
+		GetListRooms
 	}
 }

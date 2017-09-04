@@ -83,11 +83,11 @@ namespace HGL {
 			return result;
 		}
 
-		bool CanOpen (HGL_WindowStates state) {
+		public bool CanOpen (HGL_WindowStates state) {
 			return state == HGL_WindowStates.Close || state == HGL_WindowStates.Closing || state == HGL_WindowStates.Opening ? true : false;
 		}
 
-		bool CanClose (HGL_WindowStates state) {
+		public bool CanClose (HGL_WindowStates state) {
 			return state == HGL_WindowStates.Open || state == HGL_WindowStates.Opening || state == HGL_WindowStates.Closing ? true : false;
 		}
 	}

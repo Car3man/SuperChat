@@ -156,12 +156,16 @@ namespace HGL {
 			Vector3 localEAngles;
 			Vector3 localScale;
 
+			Vector2 anchPosition;
+
 			for (int i = 0; i < countProps; i++) {
 				pos = transform.position;
 				localPos = transform.localPosition;
 				eAngles = transform.eulerAngles;
 				localEAngles = transform.localEulerAngles;
 				localScale = transform.localScale;
+
+				anchPosition = transform.GetComponent<RectTransform> ().anchoredPosition;
 
 				switch (props [i].Property) {
 					case HGL_ClipProperty.Opasity:
@@ -205,6 +209,12 @@ namespace HGL {
 						break;
 					case HGL_ClipProperty.Scale:
 						transform.localScale = new Vector3 (props [i].Evaluate (Time), props [i].Evaluate (Time), localScale.z);
+						break;
+					case HGL_ClipProperty.AnchoredPositionX:
+						transform.GetComponent<RectTransform> ().anchoredPosition = new Vector2 (props [i].Evaluate (Time), anchPosition.y);
+						break;
+					case HGL_ClipProperty.AnchoredPositionY:
+						transform.GetComponent<RectTransform> ().anchoredPosition = new Vector2 (anchPosition.x, props [i].Evaluate (Time));
 						break;
 				}
 			}
