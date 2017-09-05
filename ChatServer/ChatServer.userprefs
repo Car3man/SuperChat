@@ -1,0 +1,25 @@
+﻿<Properties StartupConfiguration="{6966A14B-4501-4D3A-BAEC-0BE5FEF06624}|Default">
+  <MonoDevelop.Ide.Workbench ActiveDocument="ChatServer/Core/OperationHandlers/LoginHandler.cs">
+    <Files>
+      <File FileName="ChatServer/Core/Server.cs" Line="67" Column="22" />
+      <File FileName="ChatServer/Core/OperationHandlers/SendMessageHandler.cs" Line="8" Column="56" />
+      <File FileName="Common/ResponseCode.cs" Line="7" Column="12" />
+      <File FileName="Common/OperationCodes.cs" Line="10" Column="15" />
+      <File FileName="ChatServer/Core/OperationHandlers/EnterInRoomHandler.cs" Line="54" Column="1" />
+      <File FileName="ChatServer/Core/OperationHandlers/CreateRoomHandler.cs" Line="27" Column="96" />
+      <File FileName="ChatServer/Core/OperationHandlers/LoginHandler.cs" Line="12" Column="36" />
+      <File FileName="ChatServer/Core/OperationHandlers/PingHandler.cs" Line="1" Column="1" />
+      <File FileName="ChatServer/Core/OperationHandlers/GetListRooms.cs" Line="16" Column="5" />
+      <File FileName="Common/Utils.cs" Line="8" Column="4" />
+      <File FileName="Common/Data/Client.cs" Line="7" Column="1" />
+      <File FileName="Common/Data/Room.cs" Line="10" Column="18" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.ItemProperties.ChatServer PreferredExecutionTarget="MonoDevelop.Default" />
+  <MultiItemStartupConfigurations />
+</Properties>

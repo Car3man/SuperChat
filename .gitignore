@@ -18,13 +18,9 @@ LevelEditor_Build/
 # ===================================== #
 ExportedObj/
 *.svd
-*.userprefs
-*.csproj
 *.pidb
 *.pidb.meta
 *.suo
-*.sln
-*.user
 *.unityproj
 *.booproj
 

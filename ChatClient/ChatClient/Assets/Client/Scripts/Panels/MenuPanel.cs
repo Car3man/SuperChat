@@ -20,6 +20,7 @@ public class MenuPanel : MonoBehaviour {
 
 	public void GetListRooms () {
 		SuperChat.I.GetListRooms ();
+		GUIManager.I.ToggleMenu ();
 	}
 
 	private void OnRoomNameEntered_EnterInRoom (string name) {

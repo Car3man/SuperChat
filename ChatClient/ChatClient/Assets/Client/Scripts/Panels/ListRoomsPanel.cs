@@ -14,7 +14,13 @@ public class ListRoomsPanel : MonoBehaviour {
 		foreach (Room r in rooms) {
 			GameObject b = Instantiate (buttonRoomPrefab, content.transform);
 			b.GetComponent<ButtonRoom> ().Init (r.Name);
+			b.GetComponent<ButtonRoom> ().OnClick += OnButtonClick;
 		}
+	}
+
+	private void OnButtonClick (string nameRoom) {
+		SuperChat.I.EnterInRoom (nameRoom);
+		Close ();
 	}
 
 	private void ClearRooms () {

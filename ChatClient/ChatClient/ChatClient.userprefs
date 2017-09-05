@@ -1,0 +1,18 @@
+﻿<Properties StartupItem="Assembly-CSharp.csproj">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Client/Scripts/SuperChat.cs">
+    <Files>
+      <File FileName="Assets/Client/Scripts/Elements/ButtonRoom.cs" Line="1" Column="1" />
+      <File FileName="Assets/Client/Scripts/SuperChat.cs" Line="206" Column="29" />
+      <File FileName="Assets/Client/Scripts/Panels/MenuPanel.cs" Line="24" Column="3" />
+      <File FileName="Assets/Client/Scripts/Panels/WindowCommon1.cs" Line="1" Column="1" />
+      <File FileName="Assets/Client/Scripts/GUIManager.cs" Line="1" Column="1" />
+      <File FileName="Assets/Client/Scripts/Data/Message.cs" Line="1" Column="1" />
+      <File FileName="Assets/Client/Scripts/Panels/ListRoomsPanel.cs" Line="1" Column="1" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>
