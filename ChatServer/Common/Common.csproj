@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -30,15 +30,26 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Data\BaseData.cs" />
+    <Compile Include="Data\DataInfo.cs" />
+    <Compile Include="EventData\BaseEventData.cs" />
+    <Compile Include="EventData\ChatMessageData.cs" />
+    <Compile Include="EventTypes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="OperationCodes.cs" />
-    <Compile Include="ResponseCode.cs" />
+    <Compile Include="RequestData\BaseRequestData.cs" />
+    <Compile Include="RequestData\CreateRoomData.cs" />
+    <Compile Include="RequestData\EnterInRoomData.cs" />
+    <Compile Include="RequestData\GetListRoomsData.cs" />
+    <Compile Include="RequestData\LoginData.cs" />
+    <Compile Include="RequestData\RegisterData.cs" />
+    <Compile Include="RequestData\SendMessageData.cs" />
+    <Compile Include="RequestTypes.cs" />
+    <Compile Include="RequestResult.cs" />
     <Compile Include="Data\Client.cs" />
     <Compile Include="Data\Room.cs" />
+    <Compile Include="ResponseData\BaseResponseData.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Data\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

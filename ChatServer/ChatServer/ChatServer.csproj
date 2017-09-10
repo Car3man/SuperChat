@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -35,17 +35,14 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Core\Server.cs" />
-    <Compile Include="Core\OperationHandlers\CreateRoomHandler.cs" />
-    <Compile Include="Core\OperationHandlers\LoginHandler.cs" />
-    <Compile Include="Core\OperationHandlers\EnterInRoomHandler.cs" />
-    <Compile Include="Core\OperationHandlers\PingHandler.cs" />
-    <Compile Include="Core\OperationHandlers\SendMessageHandler.cs" />
-    <Compile Include="Core\OperationHandlers\GetListRooms.cs" />
+    <Compile Include="Core\RequestHandlers\Request_CreateRoomHandler.cs" />
+    <Compile Include="Core\RequestHandlers\Request_LoginHandler.cs" />
+    <Compile Include="Core\RequestHandlers\Request_EnterInRoomHandler.cs" />
+    <Compile Include="Core\RequestHandlers\Request_SendMessageHandler.cs" />
+    <Compile Include="Core\RequestHandlers\Request_GetListRooms.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Core\" />
-    <Folder Include="Data\" />
-    <Folder Include="Core\OperationHandlers\" />
+    <Folder Include="Core\ResponseHandlers\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">

@@ -1,14 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Net.Sockets;
 using System.Net;
 using System;
-using System.Text;
-using System.Net.NetworkInformation;
-using System.Linq;
 using Common;
-using ChatServer.OperationHandlers;
+using ChatServer.RequestHandlers;
+using Common.Data;
+using Common.EventData;
+using Common.ResponseData;
 
 namespace ChatServer {
 	public class Server {
@@ -40,9 +39,10 @@ namespace ChatServer {
 			TcpListener server = null;
 
 			string hostName = Dns.GetHostName();
-			string ip = Dns.GetHostEntry(hostName).AddressList[0].ToString();
+            //string ip = Dns.GetHostEntry(hostName).AddressList[0].ToString();
+            string ip = "192.168.0.87";
 
-			Console.WriteLine("Server started, IP: " + ip);
+            Console.WriteLine("Server started, IP: " + ip);
 
 			IPAddress localAddr = IPAddress.Parse(ip);
 			server = new TcpListener(localAddr , port);
@@ -77,7 +77,25 @@ namespace ChatServer {
 					if (bytesCount > 0) {
 						trimBuffer = new byte[bytesCount];
 						Array.Copy(buffer , trimBuffer , bytesCount);
-						HandleOperation(client , trimBuffer);
+
+                        DataInfo dataInfo = Utils.ToObjectFromBytes<DataInfo>(trimBuffer);
+                        buffer = new byte[dataInfo.Length];
+                        bytesCount = stream.Read(buffer, 0, dataInfo.Length);
+
+                        BaseData data = Utils.ToObjectFromBytes<BaseData>(buffer);
+
+                        switch(dataInfo.Type) {
+                            case DataInfo.Types.RequestData:
+                                HandleRequest(client, data.Type, data.Data);
+                                break;
+                            case DataInfo.Types.ResponseData:
+                                HandleResponse(client, data.Type, data.Data);
+                                break;
+                            default:
+                                Console.WriteLine("Unknow data type");
+                                break;
+                        }
+
 						buffer = new byte[4096];
 					}
 
@@ -90,49 +108,60 @@ namespace ChatServer {
 			Console.WriteLine(string.Format("Client with nickname {0} was disconnected" , client.Nickname));
 		}
 
-		private void HandleOperation (Client client , byte[] data) {
-			OperationCodes code = (OperationCodes)data[0];
+        private void HandleResponse(Client client, byte type, byte[] data) {
+            RequestTypes code = (RequestTypes)type;
 
-			switch (code) {
-				case OperationCodes.Login:
-					LoginHandler.DoHandle(client , data , this);
-					break;
-				case OperationCodes.Ping:
-					PingHandler.DoHandle(client , data , this);
-					break;
-				case OperationCodes.SendMessage:
-					SendMessageHandler.DoHandle(client , data , this);
-					break;
-				case OperationCodes.EnterInRoom:
-					EnterInRoomHandler.DoHandle(client , data , this);
-					break;
-				case OperationCodes.CreateRoom:
-					CreateRoomHandler.DoHandle(client , data , this);
-					break;
-				case OperationCodes.GetListRooms:
-					GetListRooms.DoHandle(client , data , this);
-					break;
-				default:
-					Console.WriteLine("Operation unknow '{0}'" , code);
-					break;
-			}
-		}
+            switch(code) {
+                default:
+                    Console.WriteLine("Operation response '{0}'", code);
+                    break;
+            }
+        }
+
+        private void HandleRequest(Client client, byte type, byte[] data) {
+            RequestTypes code = (RequestTypes)type;
+
+            switch(code) {
+                case RequestTypes.Login:
+                    Request_LoginHandler.DoHandle(client, data, this);
+                    break;
+                case RequestTypes.SendMessage:
+                    Request_SendMessageHandler.DoHandle(client, data, this);
+                    break;
+                case RequestTypes.EnterInRoom:
+                    Request_EnterInRoomHandler.DoHandle(client, data, this);
+                    break;
+                case RequestTypes.CreateRoom:
+                    Request_CreateRoomHandler.DoHandle(client, data, this);
+                    break;
+                case RequestTypes.GetListRooms:
+                    Request_GetListRooms.DoHandle(client, data, this);
+                    break;
+                default:
+                    Console.WriteLine("Operation unknow '{0}'", code);
+                    break;
+            }
+        }
 
 		public bool IsClientConnected (TcpClient client) {
-			if (client.Client.Connected) {
-				if ((client.Client.Poll(0 , SelectMode.SelectWrite)) && (!client.Client.Poll(0 , SelectMode.SelectError))) {
-					byte[] buffer = new byte[1];
-					if (client.Client.Receive(buffer , SocketFlags.Peek) == 0) {
-						return false;
-					} else {
-						return true;
-					}
-				} else {
-					return false;
-				}
-			} else {
-				return false;
-			}
+            try {
+                if(client.Client.Connected) {
+                    if((client.Client.Poll(0, SelectMode.SelectWrite)) && (!client.Client.Poll(0, SelectMode.SelectError))) {
+                        byte[] buffer = new byte[1];
+                        if(client.Client.Receive(buffer, SocketFlags.Peek) == 0) {
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            } catch(Exception e) {
+                return false;
+            }
 		}
 
 		#region Private methods
@@ -211,7 +240,47 @@ namespace ChatServer {
 			}
 			return null;
 		}
-	}
 
-	#endregion
+        #endregion
+
+        #region Core public methods
+
+        public void SendEventData(List<Client> clients, byte type, BaseEventData data) {
+            foreach(Client client in clients) {
+                NetworkStream stream = client.CurrentClient.GetStream();
+
+                BaseData d = new BaseData(type, Utils.ToByteArray(data));
+
+                List<byte> bytesInfo = new List<byte>();
+                List<byte> bytes = new List<byte>();
+
+                bytes.AddRange(Utils.ToByteArray(d));
+                bytesInfo.AddRange(Utils.ToByteArray(new DataInfo(DataInfo.Types.EventData, bytes.Count)));
+
+                stream.Write(bytesInfo.ToArray(), 0, bytesInfo.Count);
+                Thread.Sleep(50);
+                stream.Write(bytes.ToArray(), 0, bytes.Count);
+            }
+        }
+
+        public void SendResponseData(List<Client> clients, byte type, BaseResponseData data) {
+            foreach(Client client in clients) {
+                NetworkStream stream = client.CurrentClient.GetStream();
+
+                BaseData d = new BaseData(type, Utils.ToByteArray(data));
+
+                List<byte> bytesInfo = new List<byte>();
+                List<byte> bytes = new List<byte>();
+
+                bytes.AddRange(Utils.ToByteArray(d));
+                bytesInfo.AddRange(Utils.ToByteArray(new DataInfo(DataInfo.Types.ResponseData, bytes.Count)));
+
+                stream.Write(bytesInfo.ToArray(), 0, bytesInfo.Count);
+                Thread.Sleep(50);
+                stream.Write(bytes.ToArray(), 0, bytes.Count);
+            }
+        }
+
+        #endregion
+    }
 }
